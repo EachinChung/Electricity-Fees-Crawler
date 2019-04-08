@@ -78,13 +78,10 @@ class Electricity:
             for layer in self.roomKey[build]:
                 thread[count] = ElectricityThread(self.roomKey[build][layer])
                 count += 1
-
             for i in range(len(thread)):
                 thread[i].start()
-
             for i in range(len(thread)):
                 thread[i].join()
-
             for i in range(len(thread)):
                 data.update(thread[i].get_electricity())
 
@@ -93,18 +90,21 @@ class Electricity:
     def create_data_tables(self):
         conn = pymysql.connect(**self.config)
         cursor = conn.cursor()
+
         for build in self.roomKey:
-            sql = 'CREATE TABLE ' + build + ' ( `data` INT NULL '
+            sql = 'CREATE TABLE IF NOT EXISTS ' + build + ' ( `data` INT NULL '
             for layer in self.roomKey[build]:
                 for room in self.roomKey[build][layer]:
                     sql += (', `' + room + '` INT NULL ')
             sql += ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
             cursor.execute(sql)
+
         conn.close()
 
     def insert_data_tables(self):
         conn = pymysql.connect(**self.config)
         cursor = conn.cursor()
+
         for build in self.electricityData:
             sql = 'INSERT INTO ' + build + ' ( data'
             for room in self.electricityData[build]:
