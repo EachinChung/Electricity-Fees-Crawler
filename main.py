@@ -7,7 +7,6 @@ import requests
 
 
 class ElectricityThread(threading.Thread):
-
     def __init__(self, data):
         threading.Thread.__init__(self)
         self.data = data
