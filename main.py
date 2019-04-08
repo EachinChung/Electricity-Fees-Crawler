@@ -65,7 +65,7 @@ class Electricity:
         with open('RoomKey.json', 'r') as file:
             self.roomKey = json.load(file)
         self.electricityData = {}
-        self.server_time = time.strftime('%Y%m%d', time.localtime(time.time()))
+        self.server_time = time.strftime('%y%m%d', time.localtime(time.time()))
 
     def get_electricity(self):
         for build in self.roomKey:
@@ -99,22 +99,45 @@ class Electricity:
         )
         cursor = conn.cursor()
         for build in self.roomKey:
-            sql = "CREATE TABLE `electric`.`" + 'b' + build + "` ( `data` INT NULL "
+            sql = 'CREATE TABLE ' + build + ' ( `data` INT NULL '
             for layer in self.roomKey[build]:
                 for room in self.roomKey[build][layer]:
-                    sql += (", `R" + room + "` INT NULL ")
-            sql += ') ENGINE = InnoDB;'
+                    sql += (', `R' + room + '` INT NULL ')
+            sql += ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
             cursor.execute(sql)
-            print(sql)
         conn.close()
 
-    def in_data_tables(self):
-        pass
+    def insert_data_tables(self):
+        conn = pymysql.connect(
+            host='localhost',
+            port=8306,
+            user='root',
+            password='',
+            database='electric',
+            charset='utf8'
+        )
+        cursor = conn.cursor()
+        for build in self.roomKey:
+            sql = 'INSERT INTO ' + build + " ( data"
+            for layer in self.roomKey[build]:
+                for room in self.roomKey[build][layer]:
+                    sql += ', R' + room
+            sql += ") VALUES (" + self.server_time
+            for room in self.electricityData[build]:
+                if self.electricityData[build][room] != 'NULL':
+                    sql += ', ' + self.electricityData[build][room]
+                else:
+                    sql += ', ' + self.electricityData[build][room]
+            sql += ');'
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except OSError:
+                conn.rollback()
+        conn.close()
 
 
 if __name__ == '__main__':
     electricity = Electricity()
-    # electricity.get_electricity()
-    # print(electricity.electricityData)
-
-
+    electricity.get_electricity()
+    electricity.insert_data_tables()
