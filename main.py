@@ -46,12 +46,12 @@ class ElectricityThread(threading.Thread):
             else:
 
                 if float(electric_quantity) < 0:
-                    electric_quantity = 0
+                    electric_quantity = '0'
 
                 else:
 
                     electric_quantity = round(float(electric_quantity), 2)
-                    electric_quantity = int(float(electric_quantity) * 100)
+                    electric_quantity = str(int(float(electric_quantity) * 100))
 
                 self.electricity.update({room_name: electric_quantity})
                 return False
@@ -64,6 +64,8 @@ class Electricity:
     def __init__(self):
         with open('RoomKey.json', 'r') as file:
             self.roomKey = json.load(file)
+        with open('DataSQL.json', 'r') as file:
+            self.config = json.load(file)
         self.electricityData = {}
         self.server_time = time.strftime('%y%m%d', time.localtime(time.time()))
 
@@ -89,50 +91,37 @@ class Electricity:
             self.electricityData.update({build: data})
 
     def create_data_tables(self):
-        conn = pymysql.connect(
-            host='localhost',
-            port=8306,
-            user='root',
-            password='',
-            database='electric',
-            charset='utf8'
-        )
+        conn = pymysql.connect(**self.config)
         cursor = conn.cursor()
         for build in self.roomKey:
             sql = 'CREATE TABLE ' + build + ' ( `data` INT NULL '
             for layer in self.roomKey[build]:
                 for room in self.roomKey[build][layer]:
-                    sql += (', `R' + room + '` INT NULL ')
+                    sql += (', `' + room + '` INT NULL ')
             sql += ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
             cursor.execute(sql)
         conn.close()
 
     def insert_data_tables(self):
-        conn = pymysql.connect(
-            host='localhost',
-            port=8306,
-            user='root',
-            password='',
-            database='electric',
-            charset='utf8'
-        )
+        conn = pymysql.connect(**self.config)
         cursor = conn.cursor()
-        for build in self.roomKey:
-            sql = 'INSERT INTO ' + build + " ( data"
-            for layer in self.roomKey[build]:
-                for room in self.roomKey[build][layer]:
-                    sql += ', R' + room
-            sql += ") VALUES (" + self.server_time
+        for build in self.electricityData:
+            sql = 'INSERT INTO ' + build + ' ( data'
+            for room in self.electricityData[build]:
+                sql += ', ' + room
+            sql += ') VALUES (' + self.server_time
             for room in self.electricityData[build]:
                 if self.electricityData[build][room] != 'NULL':
                     sql += ', ' + self.electricityData[build][room]
                 else:
                     sql += ', ' + self.electricityData[build][room]
             sql += ');'
+
+            # noinspection PyBroadException
             try:
                 cursor.execute(sql)
                 conn.commit()
-            except OSError:
+            except:
                 conn.rollback()
         conn.close()
 

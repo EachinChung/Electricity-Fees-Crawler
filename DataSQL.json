@@ -1,0 +1,8 @@
+{
+  "host": "localhost",
+  "port": 8306,
+  "user": "root",
+  "password": "",
+  "database": "electric",
+  "charset": "utf8"
+}
