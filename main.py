@@ -21,7 +21,6 @@ class ElectricityThread(threading.Thread):
     def post(self, room_name, room_id):
         url = 'http://axf.nfu.edu.cn/electric/getData/getReserveAM'
         data = {'roomId': room_id}
-
         try:
             session = requests.session()
             response = session.post(url, data=data, timeout=1)
@@ -40,7 +39,6 @@ class ElectricityThread(threading.Thread):
                 else:
                     electric_quantity = round(float(electric_quantity), 2)
                     electric_quantity = str(int(float(electric_quantity) * 100))
-
                 self.electricity.update({room_name: electric_quantity})
                 return False
 
@@ -80,7 +78,6 @@ class Electricity:
             data = {}
             count = 0
             thread = list(range(len(self.roomKey[build])))
-
             for layer in self.roomKey[build]:
                 thread[count] = ElectricityThread(self.roomKey[build][layer])
                 count += 1
@@ -90,7 +87,6 @@ class Electricity:
                 thread[i].join()
             for i in range(len(thread)):
                 data.update(thread[i].get_electricity())
-
             self.electricityData.update({build: data})
 
     def create_data_tables(self):
@@ -115,7 +111,6 @@ class Electricity:
                 else:
                     sql += ', ' + self.electricityData[build][room]
             sql += ');'
-
             # noinspection PyBroadException
             try:
                 self.cursor.execute(sql)
