@@ -55,7 +55,25 @@ class Electricity:
         with open('DataSQL.json', 'r') as file:
             self.config = json.load(file)
         self.electricityData = {}
+        self.log = open('log', 'a')
         self.server_time = time.strftime('%y%m%d', time.localtime(time.time()))
+        self.log.write(time.strftime('%c 开始爬取数据', time.localtime(time.time())))
+        # noinspection PyBroadException
+        try:
+            self.conn = pymysql.connect(**self.config)
+            self.cursor = self.conn.cursor()
+        except:
+            self.log.write(time.strftime(' -> %X 数据库连接失败', time.localtime(time.time())))
+
+    def __del__(self):
+        # noinspection PyBroadException
+        try:
+            self.conn.close()
+        except:
+            self.log.write(time.strftime(' -> %X 数据库异常', time.localtime(time.time())))
+        finally:
+            self.log.write(time.strftime(' -> %X 结束运行\n', time.localtime(time.time())))
+            self.log.close()
 
     def get_electricity(self):
         for build in self.roomKey:
@@ -76,23 +94,16 @@ class Electricity:
             self.electricityData.update({build: data})
 
     def create_data_tables(self):
-        conn = pymysql.connect(**self.config)
-        cursor = conn.cursor()
-
         for build in self.roomKey:
             sql = 'CREATE TABLE IF NOT EXISTS ' + build + ' ( `data` INT NULL '
             for layer in self.roomKey[build]:
                 for room in self.roomKey[build][layer]:
                     sql += (', `' + room + '` INT NULL ')
-            sql += ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
-            cursor.execute(sql)
-
-        conn.close()
+            sql += ') ENGINE = InnoDB DEFAULT CHARSET = utf8;'
+            self.cursor.execute(sql)
 
     def insert_data_tables(self):
-        conn = pymysql.connect(**self.config)
-        cursor = conn.cursor()
-
+        self.log.write(time.strftime(' -> %X 开始写入数据库', time.localtime(time.time())))
         for build in self.electricityData:
             sql = 'INSERT INTO ' + build + ' ( data'
             for room in self.electricityData[build]:
@@ -107,11 +118,11 @@ class Electricity:
 
             # noinspection PyBroadException
             try:
-                cursor.execute(sql)
-                conn.commit()
+                self.cursor.execute(sql)
+                self.conn.commit()
             except:
-                conn.rollback()
-        conn.close()
+                self.conn.rollback()
+                self.log.write(time.strftime(' -> %X "' + build + '"数据表插入错误', time.localtime(time.time())))
 
 
 if __name__ == '__main__':
