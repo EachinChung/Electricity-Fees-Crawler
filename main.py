@@ -73,6 +73,17 @@ class Electricity:
             self.log.write(time.strftime(' -> %X 结束运行\n', time.localtime(time.time())))
             self.log.close()
 
+    def input_file(self):
+        self.log.write(time.strftime(' -> %X 开始写入文件缓存', time.localtime(time.time())))
+        for build in self.electricityData:
+            data = {
+                'version': self.server_time,
+                'building': build,
+                'data': self.electricityData[build]
+            }
+            with open('data/' + build, 'w') as file:
+                json.dump(data, file)
+
     def get_electricity(self):
         for build in self.roomKey:
             data = {}
@@ -91,7 +102,7 @@ class Electricity:
 
     def create_data_tables(self):
         for build in self.roomKey:
-            sql = 'CREATE TABLE IF NOT EXISTS ' + build + ' ( `data` INT NULL '
+            sql = 'CREATE TABLE IF NOT EXISTS ' + build + ' ( `date` INT NULL '
             for layer in self.roomKey[build]:
                 for room in self.roomKey[build][layer]:
                     sql += (', `' + room + '` INT NULL ')
@@ -101,7 +112,7 @@ class Electricity:
     def insert_data_tables(self):
         self.log.write(time.strftime(' -> %X 开始写入数据库', time.localtime(time.time())))
         for build in self.electricityData:
-            sql = 'INSERT INTO ' + build + ' ( data'
+            sql = 'INSERT INTO ' + build + ' ( date'
             for room in self.electricityData[build]:
                 sql += ', ' + room
             sql += ') VALUES (' + self.server_time
@@ -124,3 +135,4 @@ if __name__ == '__main__':
     electricity = Electricity()
     electricity.get_electricity()
     electricity.insert_data_tables()
+    electricity.input_file()
