@@ -2,20 +2,20 @@ from datetime import date, datetime
 from json import load
 from json.decoder import JSONDecodeError
 from os import getenv
+from traceback import format_exc
 
 from dotenv import load_dotenv
 from mysql.connector import connect
 from requests import post
 
-load_dotenv("./.env")
-with open("room_id.json", "r") as file:
+load_dotenv(f"{getenv('BASE')}/.env")
+with open(f"{getenv('BASE')}/room_id.json", "r") as file:
     room_ids = load(file)
 
 
 class ElectricityFee:
     def __init__(self):
-        self.electricityData = {}
-        self.log = open("log", "a")
+        self.log = open(f"{getenv('BASE')}/log", "a")
         self.log.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S 开始爬取数据"))
 
         self.db = connect(host="localhost", user=getenv("MYSQL_USER"), passwd=getenv("MYSQL_PASSWORD"), database="nfu")
@@ -38,7 +38,7 @@ class ElectricityFee:
         try:
             response = post(url, data=data, timeout=1)
             electric = float(response.json()["data"]["remainPower"])
-        except OSError:
+        except (OSError, TypeError):
             if retry > 2: return -1
             else: return self.__get_electric(room_id, retry + 1)
         except (JSONDecodeError, KeyError):
@@ -65,9 +65,15 @@ class ElectricityFee:
         :return:
         """
         for room_id in room_ids:
-            electric = self.__get_electric(room_id)
-            if electric != -1: self.__insert_mysql(room_id, electric)
+            try:
+                electric = self.__get_electric(room_id)
+                if electric != -1: self.__insert_mysql(room_id, electric)
+            except:
+                with open(f"{getenv('BASE')}/err.log", "a") as f:
+                    f.write(datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
+                    f.write(f"\n{format_exc()}")
+                    f.write("\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ElectricityFee().run()

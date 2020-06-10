@@ -16,10 +16,13 @@
 - 请在根目录创建 .env 文件
 
 ```
+# 文件夹根目录
+BASE=xxxxx
+
+# MySQL 账户密码
 MYSQL_USER=xxxxx
 MYSQL_PASSWORD=xxxxx
 ```
-
 
 ### 初始化 MySQL
 ```
