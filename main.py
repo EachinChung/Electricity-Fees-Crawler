@@ -38,11 +38,9 @@ class ElectricityFee:
         try:
             response = post(url, data=data, timeout=1)
             electric = float(response.json()["data"]["remainPower"])
-        except (OSError, TypeError):
+        except (OSError, TypeError, JSONDecodeError, KeyError):
             if retry > 2: return -1
             else: return self.__get_electric(room_id, retry + 1)
-        except (JSONDecodeError, KeyError):
-            return -1
         else:
             if electric < 0: electric = 0
             return electric
