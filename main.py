@@ -66,7 +66,7 @@ class ElectricityFee:
         """
         for room_id in room_ids:
             electric = self.__get_electric(room_id)
-            self.__insert_mysql(room_id, electric)
+            if electric != -1: self.__insert_mysql(room_id, electric)
 
 
 if __name__ == '__main__':
