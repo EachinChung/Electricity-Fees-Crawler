@@ -4,11 +4,11 @@ from json.decoder import JSONDecodeError
 from os import getenv
 from traceback import format_exc
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 from mysql.connector import connect
 from requests import post
 
-load_dotenv(f"{getenv('BASE')}/.env")
+load_dotenv(find_dotenv())
 with open(f"{getenv('BASE')}/room_id.json", "r") as file:
     room_ids = load(file)
 
